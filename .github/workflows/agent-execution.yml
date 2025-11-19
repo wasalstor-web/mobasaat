@@ -1,0 +1,95 @@
+name: DL+ AI Agent Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Your prompt for the AI agent (English or Arabic)'
+        required: true
+        default: 'ابحث عن أحدث تطورات الذكاء الاصطناعي'
+      language:
+        description: 'Preferred language (ar/en/auto)'
+        required: false
+        default: 'auto'
+
+jobs:
+  execute-agent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Execute AI Agent
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python << EOF
+        import asyncio
+        from dlplus import IntelligenceCore
+        from dlplus.agents import WebRetrievalAgent, CodeGeneratorAgent
+        
+        async def main():
+            print("=" * 60)
+            print("🤖 DL+ AI Agent Execution")
+            print("=" * 60)
+            
+            # Initialize core
+            core = IntelligenceCore()
+            
+            # Register agents
+            web_agent = WebRetrievalAgent()
+            code_agent = CodeGeneratorAgent()
+            core.register_agent("web_retrieval", web_agent)
+            core.register_agent("code_generator", code_agent)
+            
+            # User prompt
+            prompt = """${{ github.event.inputs.prompt }}"""
+            print(f"\n📝 Prompt: {prompt}\n")
+            
+            # Process request
+            result = await core.process_request(prompt)
+            
+            # Display results
+            print("=" * 60)
+            print("📊 Results:")
+            print("=" * 60)
+            print(f"✅ Success: {result['success']}")
+            print(f"🎯 Intent: {result['intent']}")
+            print(f"🛠️  Tools Used: {result['tools_used']}")
+            print(f"⏱️  Execution Time: {result['execution_time']:.2f}s")
+            print(f"\n💬 Response:\n{result['response']}")
+            print("=" * 60)
+        
+        asyncio.run(main())
+        EOF
+    
+    - name: Save Results
+      run: |
+        mkdir -p output
+        echo "# AI Agent Execution Results" > output/results.md
+        echo "" >> output/results.md
+        echo "**Prompt:** ${{ github.event.inputs.prompt }}" >> output/results.md
+        echo "" >> output/results.md
+        echo "**Execution Time:** $(date)" >> output/results.md
+        echo "" >> output/results.md
+        echo "✅ Execution completed successfully!" >> output/results.md
+    
+    - name: Upload Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: agent-results
+        path: output/results.md

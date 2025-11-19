@@ -1,0 +1,218 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material markdown
+      
+      - name: Create documentation site
+        run: |
+          mkdir -p site
+          
+          # Create index.html
+          cat > site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="ar" dir="rtl">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>DL+ AI Agent Platform | منصة الوكيل الذكي</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+                  body {
+                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: #fff;
+                      line-height: 1.6;
+                      padding: 20px;
+                  }
+                  .container {
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      background: rgba(255, 255, 255, 0.1);
+                      backdrop-filter: blur(10px);
+                      border-radius: 20px;
+                      padding: 40px;
+                      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                  }
+                  h1 {
+                      font-size: 3em;
+                      margin-bottom: 20px;
+                      text-align: center;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  }
+                  h2 {
+                      font-size: 2em;
+                      margin: 30px 0 15px;
+                      border-bottom: 2px solid rgba(255,255,255,0.3);
+                      padding-bottom: 10px;
+                  }
+                  .features {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                      gap: 20px;
+                      margin: 30px 0;
+                  }
+                  .feature {
+                      background: rgba(255, 255, 255, 0.1);
+                      padding: 20px;
+                      border-radius: 10px;
+                      transition: transform 0.3s;
+                  }
+                  .feature:hover {
+                      transform: translateY(-5px);
+                      background: rgba(255, 255, 255, 0.15);
+                  }
+                  .feature h3 {
+                      font-size: 1.5em;
+                      margin-bottom: 10px;
+                  }
+                  .btn {
+                      display: inline-block;
+                      padding: 12px 30px;
+                      margin: 10px;
+                      background: rgba(255, 255, 255, 0.2);
+                      color: #fff;
+                      text-decoration: none;
+                      border-radius: 25px;
+                      transition: all 0.3s;
+                      border: 2px solid rgba(255,255,255,0.3);
+                  }
+                  .btn:hover {
+                      background: rgba(255, 255, 255, 0.3);
+                      transform: scale(1.05);
+                  }
+                  .api-section {
+                      background: rgba(0, 0, 0, 0.2);
+                      padding: 20px;
+                      border-radius: 10px;
+                      margin: 20px 0;
+                  }
+                  code {
+                      background: rgba(0, 0, 0, 0.3);
+                      padding: 2px 8px;
+                      border-radius: 4px;
+                      font-family: 'Courier New', monospace;
+                  }
+                  pre {
+                      background: rgba(0, 0, 0, 0.3);
+                      padding: 15px;
+                      border-radius: 8px;
+                      overflow-x: auto;
+                      margin: 10px 0;
+                  }
+                  .footer {
+                      text-align: center;
+                      margin-top: 40px;
+                      padding-top: 20px;
+                      border-top: 1px solid rgba(255,255,255,0.2);
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🤖 DL+ AI Agent Platform</h1>
+                  <h1>منصة الوكيل الذكي</h1>
+                  
+                  <p style="text-align: center; font-size: 1.3em; margin: 20px 0;">
+                      نظام ذكاء اصطناعي متقدم مع دعم كامل للغة العربية
+                  </p>
+                  
+                  <div class="features">
+                      <div class="feature">
+                          <h3>🧠 تفكير منطقي</h3>
+                          <p>محرك تفكير متقدم يحلل المهام ويخطط للحلول</p>
+                      </div>
+                      <div class="feature">
+                          <h3>🔍 بحث ذكي</h3>
+                          <p>بحث على الويب مع تحليل وترتيب النتائج</p>
+                      </div>
+                      <div class="feature">
+                          <h3>💻 توليد أكواد</h3>
+                          <p>توليد أكواد برمجية احترافية بلغات متعددة</p>
+                      </div>
+                      <div class="feature">
+                          <h3>🇸🇦 دعم عربي</h3>
+                          <p>معالجة متقدمة للغة العربية الفصحى</p>
+                      </div>
+                  </div>
+                  
+                  <h2>🚀 البدء السريع</h2>
+                  <div class="api-section">
+                      <h3>التثبيت</h3>
+                      <pre><code>git clone https://github.com/wasalstor-web/mobasaat.git
+          cd mobasaat
+          pip install -r requirements.txt</code></pre>
+                      
+                      <h3>التشغيل</h3>
+                      <pre><code>python -m dlplus.main</code></pre>
+                      
+                      <h3>مثال استخدام</h3>
+                      <pre><code>from dlplus import IntelligenceCore
+          import asyncio
+          
+          async def main():
+              core = IntelligenceCore()
+              result = await core.process_request("ابحث عن معلومات")
+              print(result['response'])
+          
+          asyncio.run(main())</code></pre>
+                  </div>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                      <a href="https://github.com/wasalstor-web/mobasaat" class="btn">📚 GitHub Repository</a>
+                      <a href="#" class="btn">📖 Documentation</a>
+                      <a href="#" class="btn">🎯 Examples</a>
+                  </div>
+                  
+                  <div class="footer">
+                      <p>صُنع بـ ❤️ للمجتمع العربي والعالمي</p>
+                      <p>Made with ❤️ for the Arabic and Global Community</p>
+                      <p style="margin-top: 10px;">© 2025 DL+ AI Agent Platform</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './site'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
