@@ -6,7 +6,10 @@ Simple example of using DL+ Intelligence System
 
 import asyncio
 import sys
-sys.path.insert(0, '..')
+import os
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dlplus import IntelligenceCore
 from dlplus.agents import WebRetrievalAgent, CodeGeneratorAgent
