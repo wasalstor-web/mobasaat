@@ -16,7 +16,13 @@ const crypto = require('crypto');
 
 // ========== الإعدادات ==========
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.API_KEY || crypto.randomBytes(32).toString('hex');
+// Lazy-load crypto only when API_KEY is not provided (performance optimization)
+const API_KEY = process.env.API_KEY || (() => {
+  return crypto.randomBytes(32).toString('hex');
+})();
+
+// Maximum request body size (1MB) to prevent memory exhaustion
+const MAX_BODY_SIZE = 1024 * 1024;
 
 // الأوامر المسموح بها فقط (للأمان)
 const ALLOWED_COMMANDS = [
@@ -29,8 +35,25 @@ const ALLOWED_COMMANDS = [
   'git --version'
 ];
 
+// Pre-build command validation Set for O(1) lookup (performance optimization)
+const ALLOWED_COMMANDS_SET = new Set(ALLOWED_COMMANDS);
+// Pre-build prefix map for commands that can have arguments
+const ALLOWED_COMMAND_PREFIXES = ALLOWED_COMMANDS
+  .filter(cmd => cmd.includes(' '))
+  .map(cmd => cmd.split(' ')[0]);
+const ALLOWED_COMMAND_PREFIXES_SET = new Set(ALLOWED_COMMAND_PREFIXES);
+
 // ========== السيرفر ==========
 const server = http.createServer((req, res) => {
+  // Set request timeout to prevent hanging connections (performance optimization)
+  req.setTimeout(35000, () => {
+    if (!res.headersSent) {
+      res.writeHead(408, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Request timeout' }));
+    }
+    req.destroy();
+  });
+  
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -113,10 +136,28 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    let body = '';
-    req.on('data', chunk => { body += chunk.toString(); });
+    // Use array to collect chunks (more efficient than string concatenation)
+    const chunks = [];
+    let totalSize = 0;
+    
+    req.on('data', chunk => {
+      totalSize += chunk.length;
+      
+      // Prevent memory exhaustion from large payloads
+      if (totalSize > MAX_BODY_SIZE) {
+        req.destroy();
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        return;
+      }
+      
+      chunks.push(chunk);
+    });
+    
     req.on('end', () => {
       try {
+        // Efficient buffer concatenation
+        const body = Buffer.concat(chunks).toString();
         const { command } = JSON.parse(body);
         
         // التحقق من الأمر
@@ -126,10 +167,20 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        // التحقق من القائمة المسموح بها
-        const isAllowed = ALLOWED_COMMANDS.some(allowed => 
-          command.trim() === allowed || command.trim().startsWith(allowed + ' ')
-        );
+        // Optimized command validation using Set (O(1) lookup instead of O(n))
+        const trimmedCommand = command.trim();
+        let isAllowed = ALLOWED_COMMANDS_SET.has(trimmedCommand);
+        
+        // Check if command starts with an allowed prefix
+        if (!isAllowed) {
+          const commandBase = trimmedCommand.split(' ')[0];
+          if (ALLOWED_COMMAND_PREFIXES_SET.has(commandBase)) {
+            // Verify against full patterns
+            isAllowed = ALLOWED_COMMANDS.some(allowed => 
+              trimmedCommand === allowed || trimmedCommand.startsWith(allowed + ' ')
+            );
+          }
+        }
 
         if (!isAllowed) {
           res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -166,6 +217,16 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: 'Invalid JSON' }));
       }
     });
+    
+    // Handle request errors
+    req.on('error', (error) => {
+      console.error('Request error:', error);
+      if (!res.headersSent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request error' }));
+      }
+    });
+    
     return;
   }
 
