@@ -228,7 +228,7 @@ class IntelligenceCore:
             )
         else:
             # English responses
-            if intent == "greeting":
+            if intent == IntentType.GREETING.value:
                 response = "Hello! I'm an intelligent AI agent ready to assist you. How can I help you today?"
             else:
                 response = f"Processing your request with intent: {intent}"
