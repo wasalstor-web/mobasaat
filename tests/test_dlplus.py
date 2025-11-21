@@ -46,6 +46,20 @@ class TestArabicProcessor:
         assert self.processor.detect_intent("generate code") == IntentType.GENERATE_CODE
         assert self.processor.detect_intent("run command") == IntentType.EXECUTE_COMMAND
     
+    def test_detect_greeting_arabic(self):
+        """Test greeting detection for Arabic"""
+        assert self.processor.detect_intent("اهلا") == IntentType.GREETING
+        assert self.processor.detect_intent("مرحبا") == IntentType.GREETING
+        assert self.processor.detect_intent("السلام عليكم") == IntentType.GREETING
+        assert self.processor.detect_intent("صباح الخير") == IntentType.GREETING
+    
+    def test_detect_greeting_english(self):
+        """Test greeting detection for English"""
+        assert self.processor.detect_intent("hello") == IntentType.GREETING
+        assert self.processor.detect_intent("hi") == IntentType.GREETING
+        assert self.processor.detect_intent("hey") == IntentType.GREETING
+        assert self.processor.detect_intent("good morning") == IntentType.GREETING
+    
     def test_extract_entities(self):
         """Test entity extraction"""
         text = "Read file test.py and search https://example.com"
