@@ -127,7 +127,11 @@ class IntelligenceCore:
         """Select tools needed based on intent and entities"""
         tools = []
         
-        if intent == IntentType.SEARCH:
+        if intent == IntentType.GREETING:
+            # Greetings don't need any special tools
+            pass
+        
+        elif intent == IntentType.SEARCH:
             tools.append("run_web_search")
         
         elif intent == IntentType.GENERATE_CODE:
@@ -167,7 +171,13 @@ class IntelligenceCore:
         }
         
         # Build steps based on intent
-        if intent == IntentType.SEARCH:
+        if intent == IntentType.GREETING:
+            plan["steps"] = [
+                {"action": "generate_greeting", "tool": "arabic_processor"}
+            ]
+            plan["expected_output"] = "Friendly greeting response"
+        
+        elif intent == IntentType.SEARCH:
             plan["steps"] = [
                 {"action": "web_search", "tool": "run_web_search"},
                 {"action": "analyze_results", "tool": "intelligence_core"},
@@ -217,7 +227,11 @@ class IntelligenceCore:
                 {}
             )
         else:
-            response = f"Processing your request with intent: {intent}"
+            # English responses
+            if intent == IntentType.GREETING.value:
+                response = "Hello! I'm an intelligent AI agent ready to assist you. How can I help you today?"
+            else:
+                response = f"Processing your request with intent: {intent}"
         
         results["response"] = response
         results["steps_completed"] = [step["action"] for step in plan["steps"]]

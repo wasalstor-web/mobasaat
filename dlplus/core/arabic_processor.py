@@ -10,6 +10,7 @@ from enum import Enum
 
 class IntentType(Enum):
     """Types of user intents / أنواع النوايا"""
+    GREETING = "greeting"
     SEARCH = "search"
     GENERATE_CODE = "generate_code"
     EXECUTE_COMMAND = "execute_command"
@@ -30,6 +31,10 @@ class ArabicProcessor:
     def __init__(self):
         # Arabic intent keywords / كلمات مفتاحية للنوايا
         self.intent_keywords = {
+            IntentType.GREETING: [
+                "اهلا", "مرحبا", "السلام عليكم", "صباح الخير", "مساء الخير",
+                "اهلا وسهلا", "حياك", "اهلين", "يا هلا", "أهلا"
+            ],
             IntentType.SEARCH: [
                 "ابحث", "بحث", "ابحث عن", "جد", "ايجاد", "أبحث"
             ],
@@ -101,7 +106,9 @@ class ArabicProcessor:
                     return intent
         
         # Check English keywords
-        if any(word in text.lower() for word in ['search', 'find', 'look for']):
+        if any(word in text.lower() for word in ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good evening', 'howdy']):
+            return IntentType.GREETING
+        elif any(word in text.lower() for word in ['search', 'find', 'look for']):
             return IntentType.SEARCH
         elif any(word in text.lower() for word in ['code', 'program', 'script', 'generate']):
             return IntentType.GENERATE_CODE
@@ -148,6 +155,7 @@ class ArabicProcessor:
         توليد استجابة عربية بناءً على النية
         """
         responses = {
+            IntentType.GREETING: "أهلاً وسهلاً! أنا وكيل ذكي جاهز لمساعدتك. كيف يمكنني خدمتك اليوم؟",
             IntentType.SEARCH: "سأقوم بالبحث عن المعلومات المطلوبة...",
             IntentType.GENERATE_CODE: "سأقوم بتوليد الكود البرمجي المطلوب...",
             IntentType.EXECUTE_COMMAND: "سأقوم بتنفيذ الأمر المطلوب...",
